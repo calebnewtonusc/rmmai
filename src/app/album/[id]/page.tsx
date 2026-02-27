@@ -241,7 +241,7 @@ export default function AlbumPage({ params }: { params: { id: string } }) {
           className="gradient-text"
           style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}
         >
-          RMMAI
+          RMM.AI
         </span>
 
         <div style={{ display: "flex", gap: 8 }}>

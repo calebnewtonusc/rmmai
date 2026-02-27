@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RMMAI — Music Intelligence",
+  title: "RMM.AI — Music Intelligence",
   description: "AI-powered music discovery with Spotify integration",
 };
 

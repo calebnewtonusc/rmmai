@@ -27,7 +27,7 @@ export default function Home() {
             className="gradient-text"
             style={{ fontWeight: 700, fontSize: "20px", letterSpacing: "-0.4px" }}
           >
-            RMMAI
+            RMM.AI
           </span>
           <span
             style={{
@@ -196,7 +196,7 @@ export default function Home() {
               fontWeight: 400,
             }}
           >
-            RMMAI connects your Spotify history, your friends&apos; taste, and
+            RMM.AI connects your Spotify history, your friends&apos; taste, and
             Claude AI to surface what you&apos;ll actually love — before you
             even know to look for it.
           </p>
@@ -288,7 +288,7 @@ export default function Home() {
               ))}
             </div>
             <span style={{ fontSize: "14px", color: "var(--text-muted)" }}>
-              10,000+ music fans on RMMAI
+              10,000+ music fans on RMM.AI
             </span>
           </div>
         </div>
@@ -368,7 +368,7 @@ export default function Home() {
             {
               icon: "🎯",
               title: "Smart Discovery",
-              desc: "Stop searching blindly. RMMAI recommends based on what your friends love and what your history reveals.",
+              desc: "Stop searching blindly. RMM.AI recommends based on what your friends love and what your history reveals.",
             },
           ].map((feature) => (
             <div
@@ -493,7 +493,7 @@ export default function Home() {
                 lineHeight: 1.65,
               }}
             >
-              RMMAI&apos;s AI knows your entire listening history, all your
+              RMM.AI&apos;s AI knows your entire listening history, all your
               ratings, and what your friends are into. Ask it anything.
             </p>
 
@@ -561,7 +561,7 @@ export default function Home() {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "16px" }}>✨</span>
                 <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                  RMMAI AI
+                  RMM.AI
                 </span>
               </div>
               <span
@@ -1003,7 +1003,7 @@ export default function Home() {
             className="gradient-text"
             style={{ fontWeight: 700, fontSize: "16px", letterSpacing: "-0.3px" }}
           >
-            RMMAI
+            RMM.AI
           </span>
           <span
             style={{

@@ -284,7 +284,7 @@ export async function createPlaylist(
           name,
           public: false,
           collaborative: false,
-          description: 'Created by RMMAI',
+          description: 'Created by RMM.AI',
         }),
       }
     )

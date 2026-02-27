@@ -152,7 +152,7 @@ export default function DiscoverPage() {
               lineHeight: 1,
             }}
           >
-            RMMAI AI
+            RMM.AI
           </h1>
           <span
             className="glass"

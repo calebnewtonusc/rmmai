@@ -33,7 +33,7 @@ export default function Navbar() {
           className="gradient-text"
           style={{ fontWeight: 700, fontSize: "20px", letterSpacing: "-0.3px" }}
         >
-          RMMAI
+          RMM.AI
         </span>
         <span
           style={{

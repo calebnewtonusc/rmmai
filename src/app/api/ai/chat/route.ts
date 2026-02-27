@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const spotifyUser = userCookie ? JSON.parse(userCookie.value) : null
 
   // Build system prompt with music context
-  const systemPrompt = `You are RMMAI's AI music intelligence assistant. You help users discover music, analyze their taste, and get personalized recommendations.
+  const systemPrompt = `You are RMM.AI's AI music intelligence assistant. You help users discover music, analyze their taste, and get personalized recommendations.
 
 You have access to the user's music data:
 - User: ${spotifyUser?.display_name || 'Music Lover'}

@@ -1,5 +1,5 @@
 // ============================================================
-// RMMAI — RateYourMusic Scraping Utilities
+// RMM.AI — RateYourMusic Scraping Utilities
 //
 // RYM has no official public API. These functions scrape
 // rateyourmusic.com (and its mirror rym.fm where applicable)
