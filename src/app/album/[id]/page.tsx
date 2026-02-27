@@ -1,4 +1,5 @@
 "use client";
+import type { Metadata } from "next";
 import {
   Star,
   Play,
@@ -10,6 +11,11 @@ import {
   Share2,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Album — RMM.AI",
+  description: "View ratings, tracklist, and insights for this album.",
+};
 
 // ─────────────────────────────────────────────
 // Static data (simulates a DB/API fetch by id)
@@ -146,7 +152,7 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
         const half = !filled && i < rating && i + 0.5 <= rating;
         return (
           <Star
-            key={i}
+            key={`album-star-${i}`}
             size={16}
             fill={filled || half ? "var(--accent)" : "transparent"}
             color={filled || half ? "var(--accent)" : "var(--text-muted)"}
@@ -189,1145 +195,890 @@ function Avatar({
 }
 
 // ─────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────
+
+function AlbumNavBar() {
+  return (
+    <nav
+      className="glass"
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+        padding: "0 32px",
+        height: 56,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "1px solid var(--border)",
+      }}
+    >
+      <Link
+        href="/discover"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          color: "var(--text-secondary)",
+          textDecoration: "none",
+          fontSize: 14,
+          fontWeight: 500,
+          transition: "color 0.15s",
+        }}
+      >
+        <ChevronLeft size={18} />
+        Back
+      </Link>
+
+      <span
+        className="gradient-text"
+        style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}
+      >
+        RMM.AI
+      </span>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          style={{
+            background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "6px 10px",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 13,
+          }}
+        >
+          <Heart size={14} />
+          Save
+        </button>
+        <button
+          style={{
+            background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "6px 10px",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 13,
+          }}
+        >
+          <Share2 size={14} />
+          Share
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// ─────────────────────────────────────────────
+// AlbumHeroSection sub-components
+// ─────────────────────────────────────────────
+
+function AlbumArtwork() {
+  return (
+    <div
+      style={{
+        width: 200,
+        height: 200,
+        borderRadius: 20,
+        background: "linear-gradient(135deg, #1a1a2e 0%, #a855f7 60%, #ec4899 100%)",
+        flexShrink: 0,
+        boxShadow: "0 32px 64px rgba(168, 85, 247, 0.35), 0 8px 24px rgba(0,0,0,0.6)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 16,
+          left: 16,
+          right: 16,
+          height: 1,
+          background: "rgba(255,255,255,0.15)",
+        }}
+      />
+    </div>
+  );
+}
+
+interface AlbumMetadataProps {
+  title: string;
+  artist: string;
+  year: number;
+  label: string;
+  trackCount: number;
+  genres: string[];
+}
+
+function AlbumMetadata({ title, artist, year, label, trackCount, genres }: AlbumMetadataProps) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {genres.map((g) => (
+          <span
+            key={g}
+            className="glass"
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--text-secondary)",
+              padding: "3px 10px",
+              borderRadius: 999,
+            }}
+          >
+            {g}
+          </span>
+        ))}
+      </div>
+      <h1
+        style={{
+          fontSize: 48,
+          fontWeight: 700,
+          letterSpacing: "-0.03em",
+          lineHeight: 1.05,
+          color: "var(--text-primary)",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Avatar char="F" color="#a855f7" size={28} />
+        <span style={{ fontSize: 22, fontWeight: 500, color: "var(--text-secondary)" }}>
+          {artist}
+        </span>
+      </div>
+      <div style={{ display: "flex", gap: 20, fontSize: 13, color: "var(--text-muted)" }}>
+        <span>{year}</span>
+        <span style={{ color: "var(--border)" }}>•</span>
+        <span>{label}</span>
+        <span style={{ color: "var(--border)" }}>•</span>
+        <span>{trackCount} tracks</span>
+      </div>
+    </div>
+  );
+}
+
+interface AlbumRatingStatsProps {
+  rmmaiRating: number;
+  totalRatings: number;
+  starRating: number;
+}
+
+function AlbumRatingStats({ rmmaiRating, totalRatings, starRating }: AlbumRatingStatsProps) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div>
+        <div
+          style={{
+            fontSize: 40,
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: "var(--accent)",
+            lineHeight: 1,
+          }}
+        >
+          {rmmaiRating}
+          <span style={{ fontSize: 20, fontWeight: 500, color: "var(--text-muted)" }}>/10</span>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+          {totalRatings.toLocaleString()} ratings
+        </div>
+      </div>
+      <div style={{ width: 1, height: 48, background: "var(--border)" }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <StarRating rating={starRating} />
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{starRating} / 5.0</span>
+      </div>
+    </div>
+  );
+}
+
+function AlbumActionButtons() {
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button
+        style={{
+          background: "var(--accent)",
+          border: "none",
+          borderRadius: 10,
+          padding: "10px 20px",
+          color: "#fff",
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          boxShadow: "0 4px 16px rgba(168, 85, 247, 0.4)",
+          transition: "opacity 0.15s",
+        }}
+      >
+        <Star size={15} fill="#fff" />
+        Rate This Album
+      </button>
+      <button
+        style={{
+          background: "transparent",
+          border: "1px solid var(--border)",
+          borderRadius: 10,
+          padding: "10px 20px",
+          color: "var(--text-primary)",
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          transition: "border-color 0.15s",
+        }}
+      >
+        <Plus size={15} />
+        Add to List
+      </button>
+      <button
+        style={{
+          background: "#1DB954",
+          border: "none",
+          borderRadius: 10,
+          padding: "10px 20px",
+          color: "#000",
+          fontSize: 14,
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <Play size={14} fill="#000" />
+        Open in Spotify
+        <ExternalLink size={13} />
+      </button>
+    </div>
+  );
+}
+
+interface Friend {
+  id: number;
+  name: string;
+  avatar: string;
+  avatarColor: string;
+  rating: number;
+  take: string;
+}
+
+interface AlbumFriendsRowProps {
+  friends: Friend[];
+}
+
+function AlbumFriendsRow({ friends }: AlbumFriendsRowProps) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ display: "flex" }}>
+        {friends.map((f, i) => (
+          <div
+            key={f.id}
+            title={f.name}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: `${f.avatarColor}33`,
+              border: "2px solid var(--background)",
+              outline: `1.5px solid ${f.avatarColor}55`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 11,
+              fontWeight: 700,
+              color: f.avatarColor,
+              marginLeft: i === 0 ? 0 : -9,
+              zIndex: friends.length - i,
+              position: "relative",
+            }}
+          >
+            {f.avatar}
+          </div>
+        ))}
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)",
+            border: "2px solid var(--background)",
+            outline: "1.5px solid rgba(255,255,255,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            fontWeight: 700,
+            color: "var(--text-muted)",
+            marginLeft: -9,
+            zIndex: 0,
+            position: "relative",
+          }}
+        >
+          K
+        </div>
+      </div>
+      <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        <strong style={{ color: "var(--text-primary)" }}>5 friends</strong> rated this album
+      </span>
+    </div>
+  );
+}
+
+function AlbumHeroSection() {
+  return (
+    <section
+      style={{
+        width: "100%",
+        background: "linear-gradient(180deg, #0d0d1a 0%, #0d0a14 60%, var(--background) 100%)",
+        borderBottom: "1px solid var(--border)",
+        padding: "48px 0 56px",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: -120,
+          left: "20%",
+          width: 500,
+          height: 500,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          padding: "0 32px",
+          display: "flex",
+          gap: 40,
+          alignItems: "flex-start",
+          position: "relative",
+          zIndex: 1,
+        }}
+        className="animate-fade-in-up"
+      >
+        <AlbumArtwork />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+          <AlbumMetadata
+            title={album.title}
+            artist={album.artist}
+            year={album.year}
+            label={album.label}
+            trackCount={album.tracks.length}
+            genres={album.genres}
+          />
+          <AlbumRatingStats
+            rmmaiRating={album.rmmaiRating}
+            totalRatings={album.totalRatings}
+            starRating={album.starRating}
+          />
+          <AlbumActionButtons />
+          <AlbumFriendsRow friends={album.friends} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TracklistSection() {
+  return (
+    <section style={{ marginBottom: 48 }} className="animate-fade-in-up">
+      <h2
+        style={{
+          fontSize: 20,
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
+          marginBottom: 16,
+          color: "var(--text-primary)",
+        }}
+      >
+        Tracklist
+      </h2>
+
+      <div
+        className="glass"
+        style={{ borderRadius: 16, overflow: "hidden" }}
+      >
+        {/* Table header */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "40px 1fr 80px 80px",
+            padding: "10px 16px",
+            borderBottom: "1px solid var(--border)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.07em",
+            textTransform: "uppercase",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span>#</span>
+          <span>Title</span>
+          <span style={{ textAlign: "right" }}>Rating</span>
+          <span style={{ textAlign: "right" }}>Duration</span>
+        </div>
+
+        {album.tracks.map((track, i) => (
+          <div
+            key={track.num}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "40px 1fr 80px 80px",
+              padding: "12px 16px",
+              alignItems: "center",
+              backgroundColor:
+                i % 2 === 0
+                  ? "transparent"
+                  : "rgba(255,255,255,0.018)",
+              borderBottom:
+                i < album.tracks.length - 1
+                  ? "1px solid rgba(255,255,255,0.04)"
+                  : "none",
+              cursor: "default",
+              transition: "background 0.12s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.backgroundColor =
+                "rgba(168, 85, 247, 0.07)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.backgroundColor =
+                i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.018)";
+            }}
+          >
+            <span
+              style={{
+                fontSize: 13,
+                color: "var(--text-muted)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {track.num}
+            </span>
+
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              {track.title}
+            </span>
+
+            <div style={{ textAlign: "right" }}>
+              {track.rating !== null ? (
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "var(--accent)",
+                    background: "rgba(168, 85, 247, 0.12)",
+                    border: "1px solid rgba(168, 85, 247, 0.25)",
+                    borderRadius: 6,
+                    padding: "2px 7px",
+                  }}
+                >
+                  {track.rating.toFixed(1)}
+                </span>
+              ) : (
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  —
+                </span>
+              )}
+            </div>
+
+            <span
+              style={{
+                textAlign: "right",
+                fontSize: 13,
+                color: "var(--text-muted)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {track.duration}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────
 
 export default function AlbumPage({ params }: { params: { id: string } }) {
-  // In production, params.id would be used to fetch the album.
-  // Here we use the static Blonde data regardless of id.
   void params;
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "var(--background)",
-        color: "var(--text-primary)",
-      }}
-    >
-      {/* ── Nav bar ── */}
-      <nav
-        className="glass"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          padding: "0 32px",
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <Link
-          href="/discover"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            color: "var(--text-secondary)",
-            textDecoration: "none",
-            fontSize: 14,
-            fontWeight: 500,
-            transition: "color 0.15s",
-          }}
-        >
-          <ChevronLeft size={18} />
-          Back
-        </Link>
-
-        <span
-          className="gradient-text"
-          style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}
-        >
-          RMM.AI
-        </span>
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "6px 10px",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 13,
-            }}
-          >
-            <Heart size={14} />
-            Save
-          </button>
-          <button
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "6px 10px",
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 13,
-            }}
-          >
-            <Share2 size={14} />
-            Share
-          </button>
-        </div>
-      </nav>
-
-      {/* ═══════════════════════════════════════ */}
-      {/* SECTION 1 — Album Hero                 */}
-      {/* ═══════════════════════════════════════ */}
-      <section
-        style={{
-          width: "100%",
-          background:
-            "linear-gradient(180deg, #0d0d1a 0%, #0d0a14 60%, var(--background) 100%)",
-          borderBottom: "1px solid var(--border)",
-          padding: "48px 0 56px",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Ambient glow blob */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            top: -120,
-            left: "20%",
-            width: 500,
-            height: 500,
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <div
-          style={{
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 32px",
-            display: "flex",
-            gap: 40,
-            alignItems: "flex-start",
-            position: "relative",
-            zIndex: 1,
-          }}
-          className="animate-fade-in-up"
-        >
-          {/* Album Art */}
-          <div
-            style={{
-              width: 200,
-              height: 200,
-              borderRadius: 20,
-              background:
-                "linear-gradient(135deg, #1a1a2e 0%, #a855f7 60%, #ec4899 100%)",
-              flexShrink: 0,
-              boxShadow:
-                "0 32px 64px rgba(168, 85, 247, 0.35), 0 8px 24px rgba(0,0,0,0.6)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Inner texture layer */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                bottom: 16,
-                left: 16,
-                right: 16,
-                height: 1,
-                background: "rgba(255,255,255,0.15)",
-              }}
-            />
-          </div>
-
-          {/* Metadata */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* Genre badges */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {album.genres.map((g) => (
-                <span
-                  key={g}
-                  className="glass"
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    color: "var(--text-secondary)",
-                    padding: "3px 10px",
-                    borderRadius: 999,
-                  }}
-                >
-                  {g}
-                </span>
-              ))}
-            </div>
-
-            {/* Title */}
-            <h1
-              style={{
-                fontSize: 48,
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                lineHeight: 1.05,
-                color: "var(--text-primary)",
-                margin: 0,
-              }}
-            >
-              {album.title}
-            </h1>
-
-            {/* Artist row */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Avatar char="F" color="#a855f7" size={28} />
-              <span
-                style={{
-                  fontSize: 22,
-                  fontWeight: 500,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {album.artist}
-              </span>
-            </div>
-
-            {/* Meta info */}
-            <div
-              style={{
-                display: "flex",
-                gap: 20,
-                fontSize: 13,
-                color: "var(--text-muted)",
-              }}
-            >
-              <span>{album.year}</span>
-              <span style={{ color: "var(--border)" }}>•</span>
-              <span>{album.label}</span>
-              <span style={{ color: "var(--border)" }}>•</span>
-              <span>{album.tracks.length} tracks</span>
-            </div>
-
-            {/* Rating row */}
-            <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-              <div>
-                <div
-                  style={{
-                    fontSize: 40,
-                    fontWeight: 800,
-                    letterSpacing: "-0.03em",
-                    color: "var(--accent)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {album.rmmaiRating}
-                  <span
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 500,
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    /10
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                    marginTop: 4,
-                  }}
-                >
-                  {album.totalRatings.toLocaleString()} ratings
-                </div>
-              </div>
-
-              <div style={{ width: 1, height: 48, background: "var(--border)" }} />
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <StarRating rating={album.starRating} />
-                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                  {album.starRating} / 5.0
-                </span>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button
-                style={{
-                  background: "var(--accent)",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "10px 20px",
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  boxShadow: "0 4px 16px rgba(168, 85, 247, 0.4)",
-                  transition: "opacity 0.15s",
-                }}
-              >
-                <Star size={15} fill="#fff" />
-                Rate This Album
-              </button>
-
-              <button
-                style={{
-                  background: "transparent",
-                  border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  padding: "10px 20px",
-                  color: "var(--text-primary)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  transition: "border-color 0.15s",
-                }}
-              >
-                <Plus size={15} />
-                Add to List
-              </button>
-
-              <button
-                style={{
-                  background: "#1DB954",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "10px 20px",
-                  color: "#000",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <Play size={14} fill="#000" />
-                Open in Spotify
-                <ExternalLink size={13} />
-              </button>
-            </div>
-
-            {/* Friends who rated */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ display: "flex" }}>
-                {album.friends.map((f, i) => (
-                  <div
-                    key={f.id}
-                    title={f.name}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: `${f.avatarColor}33`,
-                      border: `2px solid var(--background)`,
-                      outline: `1.5px solid ${f.avatarColor}55`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: f.avatarColor,
-                      marginLeft: i === 0 ? 0 : -9,
-                      zIndex: album.friends.length - i,
-                      position: "relative",
-                    }}
-                  >
-                    {f.avatar}
-                  </div>
-                ))}
-                {/* 5th friend placeholder */}
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.06)",
-                    border: "2px solid var(--background)",
-                    outline: "1.5px solid rgba(255,255,255,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "var(--text-muted)",
-                    marginLeft: -9,
-                    zIndex: 0,
-                    position: "relative",
-                  }}
-                >
-                  K
-                </div>
-              </div>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                <strong style={{ color: "var(--text-primary)" }}>5 friends</strong> rated
-                this album
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Main content wrapper ── */}
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--background)", color: "var(--text-primary)" }}>
+      <AlbumNavBar />
+      <AlbumHeroSection />
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 32px" }}>
+        <TracklistSection />
+        <ReviewsAndFriendsSection />
+        <SimilarAlbumsSection />
+        <RymDataSection />
+      </div>
+      <AlbumFooter />
+    </div>
+  );
+}
 
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 2 — Track List                 */}
-        {/* ═══════════════════════════════════════ */}
-        <section style={{ marginBottom: 48 }} className="animate-fade-in-up">
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              marginBottom: 16,
-              color: "var(--text-primary)",
-            }}
-          >
-            Tracklist
-          </h2>
-
-          <div
-            className="glass"
-            style={{ borderRadius: 16, overflow: "hidden" }}
-          >
-            {/* Table header */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "40px 1fr 80px 80px",
-                padding: "10px 16px",
-                borderBottom: "1px solid var(--border)",
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                color: "var(--text-muted)",
-              }}
-            >
-              <span>#</span>
-              <span>Title</span>
-              <span style={{ textAlign: "right" }}>Rating</span>
-              <span style={{ textAlign: "right" }}>Duration</span>
-            </div>
-
-            {album.tracks.map((track, i) => (
-              <div
-                key={track.num}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "40px 1fr 80px 80px",
-                  padding: "12px 16px",
-                  alignItems: "center",
-                  backgroundColor:
-                    i % 2 === 0
-                      ? "transparent"
-                      : "rgba(255,255,255,0.018)",
-                  borderBottom:
-                    i < album.tracks.length - 1
-                      ? "1px solid rgba(255,255,255,0.04)"
-                      : "none",
-                  cursor: "default",
-                  transition: "background 0.12s",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor =
-                    "rgba(168, 85, 247, 0.07)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor =
-                    i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.018)";
-                }}
-              >
-                {/* Track number / play icon on hover */}
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-muted)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {track.num}
-                </span>
-
-                {/* Title */}
-                <span
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {track.title}
-                </span>
-
-                {/* Rating badge */}
-                <div style={{ textAlign: "right" }}>
-                  {track.rating !== null ? (
-                    <span
-                      style={{
-                        display: "inline-block",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "var(--accent)",
-                        background: "rgba(168, 85, 247, 0.12)",
-                        border: "1px solid rgba(168, 85, 247, 0.25)",
-                        borderRadius: 6,
-                        padding: "2px 7px",
-                      }}
-                    >
-                      {track.rating.toFixed(1)}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      —
-                    </span>
-                  )}
-                </div>
-
-                {/* Duration */}
-                <span
-                  style={{
-                    textAlign: "right",
-                    fontSize: 13,
-                    color: "var(--text-muted)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {track.duration}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 3 — Reviews + Friends          */}
-        {/* ═══════════════════════════════════════ */}
-        <section
+function ReviewsAndFriendsSection() {
+  return (
+    <section
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 24,
+        marginBottom: 48,
+        alignItems: "start",
+      }}
+      className="animate-fade-in-up"
+    >
+      {/* Left: Community Reviews */}
+      <div>
+        <h2
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 24,
-            marginBottom: 48,
-            alignItems: "start",
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            marginBottom: 16,
+            color: "var(--text-primary)",
           }}
-          className="animate-fade-in-up"
         >
-          {/* ── Left: Community Reviews ── */}
-          <div>
-            <h2
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                marginBottom: 16,
-                color: "var(--text-primary)",
-              }}
-            >
-              Community Reviews
-            </h2>
+          Community Reviews
+        </h2>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {album.reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="glass"
-                  style={{
-                    borderRadius: 14,
-                    padding: 18,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                  }}
-                >
-                  {/* Header row */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Avatar
-                        char={review.avatar}
-                        color={review.avatarColor}
-                        size={34}
-                      />
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "var(--text-primary)",
-                          }}
-                        >
-                          {review.username}
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                          {review.date}
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 24,
-                        fontWeight: 800,
-                        letterSpacing: "-0.03em",
-                        color: "var(--accent)",
-                      }}
-                    >
-                      {review.rating}
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 500,
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        /10
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Review text */}
-                  <p
-                    style={{
-                      fontSize: 13,
-                      lineHeight: 1.65,
-                      color: "var(--text-secondary)",
-                      margin: 0,
-                    }}
-                  >
-                    {review.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Right: Friends + AI Take ── */}
-          <div>
-            <h2
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                marginBottom: 16,
-                color: "var(--text-primary)",
-              }}
-            >
-              Your Friends
-            </h2>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {/* Friend cards */}
-              {album.friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="glass"
-                  style={{
-                    borderRadius: 14,
-                    padding: "14px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                  }}
-                >
-                  <Avatar char={friend.avatar} color={friend.avatarColor} size={40} />
-
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "var(--text-primary)",
-                        marginBottom: 3,
-                      }}
-                    >
-                      {friend.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "var(--text-secondary)",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {friend.take}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 800,
-                      letterSpacing: "-0.02em",
-                      color: "var(--accent)",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {friend.rating % 1 === 0
-                      ? friend.rating.toFixed(0)
-                      : friend.rating.toFixed(1)}
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      /10
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {/* AI Take card */}
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: "18px 20px",
-                  background: "rgba(168, 85, 247, 0.07)",
-                  border: "1px solid rgba(168, 85, 247, 0.35)",
-                  boxShadow: "0 0 24px rgba(168, 85, 247, 0.12)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      background:
-                        "linear-gradient(135deg, #a855f7, #ec4899)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 14,
-                    }}
-                  >
-                    ✦
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: "var(--accent)",
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    AI Take
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      color: "var(--text-muted)",
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 5,
-                      padding: "2px 6px",
-                    }}
-                  >
-                    Taste Profile
-                  </span>
-                </div>
-
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.65,
-                    margin: 0,
-                  }}
-                >
-                  Based on your taste profile, you&apos;ll likely rate this{" "}
-                  <strong style={{ color: "var(--accent)" }}>9–10</strong>. You
-                  gravitate toward albums that prioritize emotional atmosphere over
-                  structural convention, and Blonde is essentially the platonic ideal
-                  of that preference. Your affinity for Channel Orange and Sufjan
-                  Stevens&apos; <em>Carrie & Lowell</em> suggests this will land as a
-                  near-perfect record for you.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 4 — Similar Albums             */}
-        {/* ═══════════════════════════════════════ */}
-        <section style={{ marginBottom: 48 }} className="animate-fade-in-up">
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              marginBottom: 16,
-              color: "var(--text-primary)",
-            }}
-          >
-            Similar Albums
-          </h2>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(6, 1fr)",
-              gap: 14,
-            }}
-          >
-            {album.similarAlbums.map((sim) => (
-              <div
-                key={sim.id}
-                style={{
-                  cursor: "pointer",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                {/* Art square */}
-                <div
-                  style={{
-                    width: "100%",
-                    aspectRatio: "1",
-                    borderRadius: 12,
-                    background: `linear-gradient(135deg, ${sim.color}22 0%, ${sim.color}88 100%)`,
-                    border: `1px solid ${sim.color}33`,
-                    boxShadow: `0 4px 16px ${sim.color}22`,
-                    transition: "transform 0.15s, box-shadow 0.15s",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.transform =
-                      "scale(1.04)";
-                    (e.currentTarget as HTMLDivElement).style.boxShadow =
-                      `0 8px 24px ${sim.color}44`;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.transform =
-                      "scale(1)";
-                    (e.currentTarget as HTMLDivElement).style.boxShadow =
-                      `0 4px 16px ${sim.color}22`;
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background:
-                        "radial-gradient(ellipse at 25% 25%, rgba(255,255,255,0.12) 0%, transparent 55%)",
-                    }}
-                  />
-                </div>
-
-                {/* Info */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "var(--text-primary)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {sim.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-muted)",
-                      marginTop: 2,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {sim.artist}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      marginTop: 4,
-                    }}
-                  >
-                    <Star size={10} fill="var(--accent)" color="var(--accent)" />
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: "var(--accent)",
-                      }}
-                    >
-                      {sim.rating.toFixed(1)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════ */}
-        {/* SECTION 5 — RYM Data                   */}
-        {/* ═══════════════════════════════════════ */}
-        <section style={{ marginBottom: 64 }} className="animate-fade-in-up">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 16,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "var(--text-primary)",
-                margin: 0,
-              }}
-            >
-              RYM Data
-            </h2>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "var(--text-muted)",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: "2px 8px",
-              }}
-            >
-              From RateYourMusic
-            </span>
-          </div>
-
-          <div
-            className="glass"
-            style={{
-              borderRadius: 16,
-              padding: 28,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 32,
-            }}
-          >
-            {/* Stat: Community Rank */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.07em",
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Community Rank
-              </span>
-              <span
-                style={{
-                  fontSize: 28,
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {album.rymRank}
-              </span>
-            </div>
-
-            {/* Stat: Weighted Score */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.07em",
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Weighted Score
-              </span>
-              <span
-                style={{
-                  fontSize: 28,
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {album.rymScore}
-                <span
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 500,
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  {" "}
-                  / 5.00
-                </span>
-              </span>
-            </div>
-
-            {/* Stat: Year rank */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.07em",
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Year Ranking
-              </span>
-              <span
-                style={{
-                  fontSize: 28,
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {album.rymYearRank}
-              </span>
-            </div>
-
-            {/* Tags — full width row */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {album.reviews.map((review) => (
             <div
+              key={review.id}
+              className="glass"
               style={{
-                gridColumn: "1 / -1",
-                borderTop: "1px solid var(--border)",
-                paddingTop: 20,
+                borderRadius: 14,
+                padding: 18,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
               }}
             >
               <div
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.07em",
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                  marginBottom: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                Top Tags
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Avatar char={review.avatar} color={review.avatarColor} size={34} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                      {review.username}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      {review.date}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--accent)" }}>
+                  {review.rating}
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-muted)" }}>/10</span>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {album.rymTags.map((tag, i) => {
-                  const tagColors = [
-                    "#a855f7",
-                    "#3b82f6",
-                    "#ec4899",
-                    "#f97316",
-                    "#22c55e",
-                    "#ef4444",
-                  ];
-                  const c = tagColors[i % tagColors.length];
-                  return (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: c,
-                        background: `${c}18`,
-                        border: `1px solid ${c}33`,
-                        borderRadius: 999,
-                        padding: "4px 12px",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  );
-                })}
-              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.65, color: "var(--text-secondary)", margin: 0 }}>
+                {review.text}
+              </p>
             </div>
-          </div>
-        </section>
+          ))}
+        </div>
       </div>
 
-      {/* Footer */}
-      <footer
-        style={{
-          borderTop: "1px solid var(--border)",
-          padding: "24px 32px",
-          textAlign: "center",
-        }}
-      >
-        <div
+      {/* Right: Friends + AI Take */}
+      <div>
+        <h2
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            color: "var(--text-muted)",
-            fontSize: 13,
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            marginBottom: 16,
+            color: "var(--text-primary)",
           }}
         >
-          <Users size={14} />
-          <span>
-            Data sourced from RateYourMusic community ratings and Spotify API.
+          Your Friends
+        </h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {album.friends.map((friend) => (
+            <div
+              key={friend.id}
+              className="glass"
+              style={{ borderRadius: 14, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}
+            >
+              <Avatar char={friend.avatar} color={friend.avatarColor} size={40} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 3 }}>
+                  {friend.name}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                  {friend.take}
+                </div>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--accent)", flexShrink: 0 }}>
+                {friend.rating % 1 === 0 ? friend.rating.toFixed(0) : friend.rating.toFixed(1)}
+                <span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)" }}>/10</span>
+              </div>
+            </div>
+          ))}
+
+          {/* AI Take card */}
+          <div
+            style={{
+              borderRadius: 14,
+              padding: "18px 20px",
+              background: "rgba(168, 85, 247, 0.07)",
+              border: "1px solid rgba(168, 85, 247, 0.35)",
+              boxShadow: "0 0 24px rgba(168, 85, 247, 0.12)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: "linear-gradient(135deg, #a855f7, #ec4899)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                }}
+              >
+                ✦
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", letterSpacing: "-0.01em" }}>
+                AI Take
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 5,
+                  padding: "2px 6px",
+                }}
+              >
+                Taste Profile
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65, margin: 0 }}>
+              Based on your taste profile, you&apos;ll likely rate this{" "}
+              <strong style={{ color: "var(--accent)" }}>9–10</strong>. You
+              gravitate toward albums that prioritize emotional atmosphere over
+              structural convention, and Blonde is essentially the platonic ideal
+              of that preference. Your affinity for Channel Orange and Sufjan
+              Stevens&apos; <em>Carrie & Lowell</em> suggests this will land as a
+              near-perfect record for you.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SimilarAlbumsSection() {
+  return (
+    <section style={{ marginBottom: 48 }} className="animate-fade-in-up">
+      <h2
+        style={{
+          fontSize: 20,
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
+          marginBottom: 16,
+          color: "var(--text-primary)",
+        }}
+      >
+        Similar Albums
+      </h2>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }}>
+        {album.similarAlbums.map((sim) => (
+          <div key={sim.id} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 8 }}>
+            <div
+              style={{
+                width: "100%",
+                aspectRatio: "1",
+                borderRadius: 12,
+                background: `linear-gradient(135deg, ${sim.color}22 0%, ${sim.color}88 100%)`,
+                border: `1px solid ${sim.color}33`,
+                boxShadow: `0 4px 16px ${sim.color}22`,
+                transition: "transform 0.15s, box-shadow 0.15s",
+                position: "relative",
+                overflow: "hidden",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLDivElement).style.transform = "scale(1.04)";
+                (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px ${sim.color}44`;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.transform = "scale(1)";
+                (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 16px ${sim.color}22`;
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "radial-gradient(ellipse at 25% 25%, rgba(255,255,255,0.12) 0%, transparent 55%)",
+                }}
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {sim.title}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {sim.artist}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                <Star size={10} fill="var(--accent)" color="var(--accent)" />
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--accent)" }}>
+                  {sim.rating.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RymDataSection() {
+  const tagColors = ["#a855f7", "#3b82f6", "#ec4899", "#f97316", "#22c55e", "#ef4444"];
+  return (
+    <section style={{ marginBottom: 64 }} className="animate-fade-in-up">
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text-primary)", margin: 0 }}>
+          RYM Data
+        </h2>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "var(--text-muted)",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            padding: "2px 8px",
+          }}
+        >
+          From RateYourMusic
+        </span>
+      </div>
+
+      <div
+        className="glass"
+        style={{ borderRadius: 16, padding: 28, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 32 }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+            Community Rank
+          </span>
+          <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
+            {album.rymRank}
           </span>
         </div>
-      </footer>
-    </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+            Weighted Score
+          </span>
+          <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
+            {album.rymScore}
+            <span style={{ fontSize: 16, fontWeight: 500, color: "var(--text-muted)" }}> / 5.00</span>
+          </span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+            Year Ranking
+          </span>
+          <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text-primary)" }}>
+            {album.rymYearRank}
+          </span>
+        </div>
+
+        <div style={{ gridColumn: "1 / -1", borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
+            Top Tags
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {album.rymTags.map((tag, i) => {
+              const c = tagColors[i % tagColors.length];
+              return (
+                <span key={tag} style={{ fontSize: 12, fontWeight: 500, color: c, background: `${c}18`, border: `1px solid ${c}33`, borderRadius: 999, padding: "4px 12px" }}>
+                  {tag}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AlbumFooter() {
+  return (
+    <footer style={{ borderTop: "1px solid var(--border)", padding: "24px 32px", textAlign: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "var(--text-muted)", fontSize: 13 }}>
+        <Users size={14} />
+        <span>Data sourced from RateYourMusic community ratings and Spotify API.</span>
+      </div>
+    </footer>
   );
 }

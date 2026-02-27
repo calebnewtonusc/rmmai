@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Star,
   Filter,
@@ -6,6 +7,11 @@ import {
   Plus,
   Grid3X3,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "My Ratings — RMM.AI",
+  description: "Browse and manage all your album ratings.",
+};
 
 // ─── Static Data ─────────────────────────────────────────────────────────────
 
@@ -342,6 +348,535 @@ function RatingBadge({ rating }: { rating: number }) {
   );
 }
 
+// ─── Section Sub-components ───────────────────────────────────────────────────
+
+function RatingsHeader() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <h1
+          style={{
+            fontSize: "2.25rem",
+            fontWeight: 700,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.03em",
+            lineHeight: 1.1,
+          }}
+        >
+          My Ratings
+        </h1>
+        <p style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 400 }}>
+          142 albums rated
+        </p>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <button
+          className="glass"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            padding: "10px 16px",
+            borderRadius: "12px",
+            fontSize: "0.84rem",
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+        >
+          <SortAsc size={14} style={{ color: "var(--text-muted)" }} />
+          Sort: Recent
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: "var(--text-muted)", marginLeft: "2px" }}>
+            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            padding: "10px 16px",
+            borderRadius: "12px",
+            fontSize: "0.84rem",
+            fontWeight: 600,
+            color: "var(--accent)",
+            cursor: "pointer",
+            border: "1px solid rgba(168,85,247,0.4)",
+            background: "transparent",
+          }}
+        >
+          <Plus size={14} />
+          Import from RYM
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RatingsFilterBar({ selectedGenre }: { selectedGenre: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 34,
+          height: 34,
+          borderRadius: "10px",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          flexShrink: 0,
+        }}
+      >
+        <Filter size={14} style={{ color: "var(--text-muted)" }} />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          flex: 1,
+          paddingBottom: "2px",
+        }}
+      >
+        {genreFilters.map((genre) => {
+          const isSelected = genre === selectedGenre;
+          return (
+            <button
+              key={genre}
+              style={{
+                padding: "7px 16px",
+                borderRadius: "999px",
+                fontSize: "0.82rem",
+                fontWeight: isSelected ? 700 : 500,
+                color: isSelected ? "white" : "var(--text-secondary)",
+                cursor: "pointer",
+                border: isSelected ? "1px solid var(--accent)" : "1px solid var(--border)",
+                background: isSelected ? "var(--accent)" : "rgba(255,255,255,0.04)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
+              }}
+            >
+              {genre}
+            </button>
+          );
+        })}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 34,
+          height: 34,
+          borderRadius: "10px",
+          background: "rgba(168,85,247,0.15)",
+          border: "1px solid rgba(168,85,247,0.35)",
+          flexShrink: 0,
+          cursor: "pointer",
+        }}
+      >
+        <Grid3X3 size={14} style={{ color: "var(--accent)" }} />
+      </div>
+    </div>
+  );
+}
+
+function RatedAlbumsGrid() {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
+      {ratedAlbums.map((album) => (
+        <div
+          key={album.id}
+          className="glass"
+          style={{
+            borderRadius: "18px",
+            overflow: "hidden",
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            display: "flex",
+            flexDirection: "column",
+            cursor: "pointer",
+            position: "relative",
+            transition: "border-color 0.2s ease, transform 0.2s ease",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "1 / 1",
+              background: album.gradient,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: "2rem",
+                fontWeight: 800,
+                color: "rgba(255,255,255,0.8)",
+                letterSpacing: "-0.04em",
+                userSelect: "none",
+              }}
+            >
+              {[album.title, album.artist]
+                .map((s) => s.split(" ").filter(Boolean)[0]?.[0] ?? "")
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </span>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(4px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: 0,
+                transition: "opacity 0.2s ease",
+              }}
+              className="album-hover-overlay"
+            >
+              <button
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 18px",
+                  borderRadius: "10px",
+                  background: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                <Edit2 size={13} />
+                Edit Rating
+              </button>
+            </div>
+          </div>
+          <div
+            style={{
+              padding: "0.85rem 0.9rem 0.9rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              flex: 1,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.3,
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
+                  {album.title}
+                </p>
+                <p
+                  style={{
+                    fontSize: "0.72rem",
+                    color: "var(--text-secondary)",
+                    marginTop: "2px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {album.artist}
+                </p>
+              </div>
+              <div style={{ flexShrink: 0, textAlign: "right" }}>
+                <RatingBadge rating={album.rating} />
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "2px" }}>
+              <Star size={10} style={{ color: "#f59e0b", fill: "#f59e0b", flexShrink: 0 }} />
+              <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                Rated {album.dateRated}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WantsToRateSection() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "8px",
+              background: "rgba(168,85,247,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Star size={14} style={{ color: "var(--accent)", fill: "transparent" }} />
+          </div>
+          <div>
+            <h2
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}
+            >
+              On your radar
+            </h2>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
+              Albums you want to rate
+            </p>
+          </div>
+        </div>
+        <button
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "7px 14px",
+            borderRadius: "10px",
+            fontSize: "0.78rem",
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            cursor: "pointer",
+            border: "1px solid var(--border)",
+            background: "transparent",
+          }}
+        >
+          <Plus size={12} />
+          Add album
+        </button>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: "1rem",
+          overflowX: "auto",
+          scrollbarWidth: "thin",
+          paddingBottom: "4px",
+        }}
+      >
+        {wantsToRate.map((album) => (
+          <div
+            key={album.id}
+            className="glass"
+            style={{
+              minWidth: "220px",
+              maxWidth: "220px",
+              borderRadius: "18px",
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              overflow: "hidden",
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{
+                height: "120px",
+                background: album.gradient,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "1.6rem",
+                  fontWeight: 800,
+                  color: "rgba(255,255,255,0.8)",
+                  letterSpacing: "-0.04em",
+                  userSelect: "none",
+                }}
+              >
+                {[album.title, album.artist]
+                  .map((s) => s.split(" ").filter(Boolean)[0]?.[0] ?? "")
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </span>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "8px",
+                  right: "8px",
+                  background: "rgba(0,0,0,0.65)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  borderRadius: "6px",
+                  padding: "3px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <Star size={9} style={{ color: "#f59e0b", fill: "#f59e0b" }} />
+                <span style={{ fontSize: "0.65rem", fontWeight: 600, color: "white" }}>
+                  {album.friendsRated} friends rated
+                </span>
+              </div>
+            </div>
+            <div
+              style={{
+                padding: "0.85rem 0.9rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                flex: 1,
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.3,
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
+                  {album.title}
+                </p>
+                <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: "2px" }}>
+                  {album.artist}
+                </p>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "3px 9px",
+                  borderRadius: "999px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid var(--border)",
+                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  color: "var(--text-muted)",
+                  width: "fit-content",
+                }}
+              >
+                {album.genre}
+              </div>
+              <button
+                style={{
+                  width: "100%",
+                  padding: "9px",
+                  borderRadius: "11px",
+                  background: "rgba(168,85,247,0.12)",
+                  border: "1px solid rgba(168,85,247,0.3)",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  transition: "background 0.15s ease",
+                }}
+              >
+                <Star size={13} style={{ fill: "transparent" }} />
+                Rate Now
+              </button>
+            </div>
+          </div>
+        ))}
+        <div
+          style={{
+            minWidth: "140px",
+            maxWidth: "140px",
+            borderRadius: "18px",
+            border: "1px dashed rgba(255,255,255,0.1)",
+            background: "rgba(255,255,255,0.02)",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            cursor: "pointer",
+            padding: "1.5rem 1rem",
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: "rgba(168,85,247,0.1)",
+              border: "1px solid rgba(168,85,247,0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Plus size={18} style={{ color: "var(--accent)" }} />
+          </div>
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              textAlign: "center",
+              lineHeight: 1.4,
+            }}
+          >
+            Add to radar
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RatingsPage() {
@@ -359,675 +894,19 @@ export default function RatingsPage() {
         maxWidth: "1400px",
       }}
     >
-      {/* ── Header ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <h1
-            style={{
-              fontSize: "2.25rem",
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.03em",
-              lineHeight: 1.1,
-            }}
-          >
-            My Ratings
-          </h1>
-          <p
-            style={{
-              fontSize: "0.95rem",
-              color: "var(--text-muted)",
-              fontWeight: 400,
-            }}
-          >
-            142 albums rated
-          </p>
-        </div>
-
-        {/* Header actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {/* Sort dropdown */}
-          <button
-            className="glass"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "10px 16px",
-              borderRadius: "12px",
-              fontSize: "0.84rem",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              cursor: "pointer",
-              border: "1px solid var(--border)",
-              background: "rgba(255,255,255,0.04)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-            }}
-          >
-            <SortAsc size={14} style={{ color: "var(--text-muted)" }} />
-            Sort: Recent
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              style={{ color: "var(--text-muted)", marginLeft: "2px" }}
-            >
-              <path
-                d="M3 4.5L6 7.5L9 4.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          {/* Import from RYM */}
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "10px 16px",
-              borderRadius: "12px",
-              fontSize: "0.84rem",
-              fontWeight: 600,
-              color: "var(--accent)",
-              cursor: "pointer",
-              border: "1px solid rgba(168,85,247,0.4)",
-              background: "transparent",
-            }}
-          >
-            <Plus size={14} />
-            Import from RYM
-          </button>
-        </div>
-      </div>
+      <RatingsHeader />
 
       {/* ── Stats Bar ── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "1rem",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
         <StatCard label="Average Rating" value="8.4" sub="out of 10" accent />
-        <StatCard
-          label="Most Rated Genre"
-          value="Indie Rock"
-          sub="34 albums"
-        />
-        <StatCard
-          label="Highest Rated"
-          value="MBDTF"
-          sub="10/10 — perfect score"
-        />
+        <StatCard label="Most Rated Genre" value="Indie Rock" sub="34 albums" />
+        <StatCard label="Highest Rated" value="MBDTF" sub="10/10 — perfect score" />
         <StatCard label="This Month" value="6" sub="new ratings added" />
       </div>
 
-      {/* ── Filter Chips ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        {/* Filter icon */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 34,
-            height: 34,
-            borderRadius: "10px",
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            flexShrink: 0,
-          }}
-        >
-          <Filter size={14} style={{ color: "var(--text-muted)" }} />
-        </div>
-
-        {/* Scrollable chip row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-            flex: 1,
-            paddingBottom: "2px",
-          }}
-        >
-          {genreFilters.map((genre) => {
-            const isSelected = genre === selectedGenre;
-            return (
-              <button
-                key={genre}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: "999px",
-                  fontSize: "0.82rem",
-                  fontWeight: isSelected ? 700 : 500,
-                  color: isSelected ? "white" : "var(--text-secondary)",
-                  cursor: "pointer",
-                  border: isSelected
-                    ? "1px solid var(--accent)"
-                    : "1px solid var(--border)",
-                  background: isSelected
-                    ? "var(--accent)"
-                    : "rgba(255,255,255,0.04)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {genre}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Grid toggle */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 34,
-            height: 34,
-            borderRadius: "10px",
-            background: "rgba(168,85,247,0.15)",
-            border: "1px solid rgba(168,85,247,0.35)",
-            flexShrink: 0,
-            cursor: "pointer",
-          }}
-        >
-          <Grid3X3 size={14} style={{ color: "var(--accent)" }} />
-        </div>
-      </div>
-
-      {/* ── Ratings Grid ── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "1rem",
-        }}
-      >
-        {ratedAlbums.map((album) => (
-          <div
-            key={album.id}
-            className="glass"
-            style={{
-              borderRadius: "18px",
-              overflow: "hidden",
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              display: "flex",
-              flexDirection: "column",
-              cursor: "pointer",
-              position: "relative",
-              transition: "border-color 0.2s ease, transform 0.2s ease",
-            }}
-          >
-            {/* Album art */}
-            <div
-              style={{
-                width: "100%",
-                aspectRatio: "1 / 1",
-                background: album.gradient,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                flexShrink: 0,
-              }}
-            >
-              {/* Initials */}
-              <span
-                style={{
-                  fontSize: "2rem",
-                  fontWeight: 800,
-                  color: "rgba(255,255,255,0.8)",
-                  letterSpacing: "-0.04em",
-                  userSelect: "none",
-                }}
-              >
-                {[album.title, album.artist]
-                  .map((s) => s.split(" ").filter(Boolean)[0]?.[0] ?? "")
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </span>
-
-              {/* Hover: edit button overlay */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(4px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: 0,
-                  transition: "opacity 0.2s ease",
-                }}
-                className="album-hover-overlay"
-              >
-                <button
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "9px 18px",
-                    borderRadius: "10px",
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Edit2 size={13} />
-                  Edit Rating
-                </button>
-              </div>
-            </div>
-
-            {/* Card body */}
-            <div
-              style={{
-                padding: "0.85rem 0.9rem 0.9rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                flex: 1,
-              }}
-            >
-              {/* Title + rating row */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: "8px",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p
-                    style={{
-                      fontSize: "0.82rem",
-                      fontWeight: 700,
-                      color: "var(--text-primary)",
-                      lineHeight: 1.3,
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {album.title}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.72rem",
-                      color: "var(--text-secondary)",
-                      marginTop: "2px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {album.artist}
-                  </p>
-                </div>
-
-                {/* Rating */}
-                <div style={{ flexShrink: 0, textAlign: "right" }}>
-                  <RatingBadge rating={album.rating} />
-                </div>
-              </div>
-
-              {/* Date rated */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  marginTop: "2px",
-                }}
-              >
-                <Star
-                  size={10}
-                  style={{
-                    color: "#f59e0b",
-                    fill: "#f59e0b",
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: "0.68rem",
-                    color: "var(--text-muted)",
-                    fontWeight: 500,
-                  }}
-                >
-                  Rated {album.dateRated}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Wants to Rate ── */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        {/* Section header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "8px",
-                background: "rgba(168,85,247,0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Star
-                size={14}
-                style={{ color: "var(--accent)", fill: "transparent" }}
-              />
-            </div>
-            <div>
-              <h2
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1,
-                }}
-              >
-                On your radar
-              </h2>
-              <p
-                style={{
-                  fontSize: "0.75rem",
-                  color: "var(--text-muted)",
-                  marginTop: "2px",
-                }}
-              >
-                Albums you want to rate
-              </p>
-            </div>
-          </div>
-
-          <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 14px",
-              borderRadius: "10px",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              border: "1px solid var(--border)",
-              background: "transparent",
-            }}
-          >
-            <Plus size={12} />
-            Add album
-          </button>
-        </div>
-
-        {/* Horizontal scroll row */}
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            overflowX: "auto",
-            scrollbarWidth: "thin",
-            paddingBottom: "4px",
-          }}
-        >
-          {wantsToRate.map((album) => (
-            <div
-              key={album.id}
-              className="glass"
-              style={{
-                minWidth: "220px",
-                maxWidth: "220px",
-                borderRadius: "18px",
-                border: "1px solid var(--border)",
-                background: "var(--surface)",
-                overflow: "hidden",
-                flexShrink: 0,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {/* Art */}
-              <div
-                style={{
-                  height: "120px",
-                  background: album.gradient,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                  flexShrink: 0,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "1.6rem",
-                    fontWeight: 800,
-                    color: "rgba(255,255,255,0.8)",
-                    letterSpacing: "-0.04em",
-                    userSelect: "none",
-                  }}
-                >
-                  {[album.title, album.artist]
-                    .map((s) => s.split(" ").filter(Boolean)[0]?.[0] ?? "")
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </span>
-
-                {/* Friends badge */}
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "8px",
-                    background: "rgba(0,0,0,0.65)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    borderRadius: "6px",
-                    padding: "3px 8px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <Star
-                    size={9}
-                    style={{ color: "#f59e0b", fill: "#f59e0b" }}
-                  />
-                  <span
-                    style={{
-                      fontSize: "0.65rem",
-                      fontWeight: 600,
-                      color: "white",
-                    }}
-                  >
-                    {album.friendsRated} friends rated
-                  </span>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div
-                style={{
-                  padding: "0.85rem 0.9rem",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  flex: 1,
-                }}
-              >
-                <div>
-                  <p
-                    style={{
-                      fontSize: "0.82rem",
-                      fontWeight: 700,
-                      color: "var(--text-primary)",
-                      lineHeight: 1.3,
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {album.title}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.72rem",
-                      color: "var(--text-secondary)",
-                      marginTop: "2px",
-                    }}
-                  >
-                    {album.artist}
-                  </p>
-                </div>
-
-                {/* Genre chip */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "3px 9px",
-                    borderRadius: "999px",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid var(--border)",
-                    fontSize: "0.65rem",
-                    fontWeight: 600,
-                    color: "var(--text-muted)",
-                    width: "fit-content",
-                  }}
-                >
-                  {album.genre}
-                </div>
-
-                {/* Rate Now button */}
-                <button
-                  style={{
-                    width: "100%",
-                    padding: "9px",
-                    borderRadius: "11px",
-                    background: "rgba(168,85,247,0.12)",
-                    border: "1px solid rgba(168,85,247,0.3)",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
-                    color: "var(--accent)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    transition: "background 0.15s ease",
-                  }}
-                >
-                  <Star size={13} style={{ fill: "transparent" }} />
-                  Rate Now
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Add more card */}
-          <div
-            style={{
-              minWidth: "140px",
-              maxWidth: "140px",
-              borderRadius: "18px",
-              border: "1px dashed rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.02)",
-              flexShrink: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              cursor: "pointer",
-              padding: "1.5rem 1rem",
-            }}
-          >
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: "rgba(168,85,247,0.1)",
-                border: "1px solid rgba(168,85,247,0.25)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Plus size={18} style={{ color: "var(--accent)" }} />
-            </div>
-            <span
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                color: "var(--text-muted)",
-                textAlign: "center",
-                lineHeight: 1.4,
-              }}
-            >
-              Add to radar
-            </span>
-          </div>
-        </div>
-      </div>
+      <RatingsFilterBar selectedGenre={selectedGenre} />
+      <RatedAlbumsGrid />
+      <WantsToRateSection />
 
       {/* Bottom spacer */}
       <div style={{ height: "1rem" }} />
