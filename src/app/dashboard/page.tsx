@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Play,
   MoreHorizontal,
@@ -11,64 +14,64 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// ─── Static Data ─────────────────────────────────────────────────────────────
+// ─── Cookie Helper ─────────────────────────────────────────────────────────────
 
-const recentTracks = [
-  {
-    id: 1,
-    title: "Pink + White",
-    artist: "Frank Ocean",
-    album: "Blonde",
-    duration: "3:00",
-    rating: 9,
-    color: "#f97316",
-  },
-  {
-    id: 2,
-    title: "Motion Picture Soundtrack",
-    artist: "Radiohead",
-    album: "Kid A",
-    duration: "7:01",
-    rating: 10,
-    color: "#3b82f6",
-  },
-  {
-    id: 3,
-    title: "All Falls Down",
-    artist: "Kanye West",
-    album: "The College Dropout",
-    duration: "3:36",
-    rating: null,
-    color: "#f59e0b",
-  },
-  {
-    id: 4,
-    title: "Nights",
-    artist: "Frank Ocean",
-    album: "Blonde",
-    duration: "5:07",
-    rating: 8,
-    color: "#f97316",
-  },
-  {
-    id: 5,
-    title: "Runaway",
-    artist: "Kanye West",
-    album: "My Beautiful Dark Twisted Fantasy",
-    duration: "9:08",
-    rating: 10,
-    color: "#a855f7",
-  },
-  {
-    id: 6,
-    title: "Everything In Its Right Place",
-    artist: "Radiohead",
-    album: "Kid A",
-    duration: "4:11",
-    rating: null,
-    color: "#3b82f6",
-  },
-];
+function getSpotifyUser() {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/spotify_user=([^;]+)/);
+  if (!match) return null;
+  try {
+    return JSON.parse(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+}
+
+// ─── Duration Helper ──────────────────────────────────────────────────────────
+
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+// ─── Color Helper ─────────────────────────────────────────────────────────────
+
+const TRACK_COLORS = ["#f97316", "#3b82f6", "#f59e0b", "#a855f7", "#22c55e"];
+
+function colorFromId(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return TRACK_COLORS[hash % TRACK_COLORS.length];
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  artist: string;
+  album: string;
+  albumArt: string;
+  duration_ms: number;
+  played_at: string;
+  spotifyUrl: string;
+}
+
+interface DisplayTrack {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: string;
+  rating: number | null;
+  color: string;
+}
+
+// ─── Static Data ─────────────────────────────────────────────────────────────
 
 const topAlbums = [
   {
@@ -327,6 +330,108 @@ function AlbumArtSquare({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const [recentTracks, setRecentTracks] = useState<DisplayTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [unauthenticated, setUnauthenticated] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = getSpotifyUser();
+    if (user?.display_name) {
+      setDisplayName(user.display_name);
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/spotify/recent");
+
+        if (res.status === 401) {
+          setUnauthenticated(true);
+          setLoading(false);
+          return;
+        }
+
+        if (!res.ok) {
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        const tracks: SpotifyTrack[] = data.tracks ?? [];
+
+        const mapped: DisplayTrack[] = tracks.map((t) => ({
+          id: t.id,
+          title: t.name,
+          artist: t.artist,
+          album: t.album,
+          duration: formatDuration(t.duration_ms),
+          rating: null,
+          color: colorFromId(t.id),
+        }));
+
+        setRecentTracks(mapped);
+      } catch {
+        // network error — fall through with empty tracks
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  const greeting = (() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  })();
+
+  const todayLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  if (unauthenticated) {
+    return (
+      <div
+        style={{
+          padding: "2rem 2.5rem",
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1rem",
+        }}
+      >
+        <Music2 size={48} style={{ color: "var(--text-muted)" }} />
+        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }}>
+          Connect Spotify to see your data
+        </h2>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+          Link your Spotify account to start tracking your listening history.
+        </p>
+        <a
+          href="/api/auth/spotify"
+          style={{
+            marginTop: "0.5rem",
+            padding: "12px 28px",
+            borderRadius: "12px",
+            background: "#1db954",
+            color: "white",
+            fontWeight: 700,
+            fontSize: "0.95rem",
+            textDecoration: "none",
+          }}
+        >
+          Connect Spotify
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div
       className="animate-fade-in-up"
@@ -337,6 +442,8 @@ export default function DashboardPage() {
         flexDirection: "column",
         gap: "2rem",
         maxWidth: "1400px",
+        opacity: loading ? 0.5 : 1,
+        transition: "opacity 0.3s ease",
       }}
     >
       {/* ── Header Row ── */}
@@ -351,10 +458,10 @@ export default function DashboardPage() {
               lineHeight: 1.1,
             }}
           >
-            Good evening, Joel
+            {greeting}, {displayName ?? "Joel"}
           </h1>
           <p style={{ fontSize: "0.95rem", color: "var(--text-muted)", fontWeight: 400 }}>
-            Thursday, Feb 26
+            {todayLabel}
           </p>
         </div>
 
@@ -525,6 +632,18 @@ export default function DashboardPage() {
 
             {/* Track rows */}
             <div>
+              {recentTracks.length === 0 && !loading && (
+                <div
+                  style={{
+                    padding: "2rem 1.5rem",
+                    textAlign: "center",
+                    fontSize: "0.85rem",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  No recent tracks found.
+                </div>
+              )}
               {recentTracks.map((track, idx) => (
                 <div
                   key={track.id}
@@ -881,7 +1000,7 @@ export default function DashboardPage() {
                 <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--accent)", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                   AI Insight
                 </p>
-                <p style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>Today's discovery</p>
+                <p style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>Today&apos;s discovery</p>
               </div>
             </div>
 

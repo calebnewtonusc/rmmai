@@ -49,7 +49,7 @@ export default function Home() {
         {/* Right: Sign in + Connect Spotify */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Link
-            href="/dashboard"
+            href="/api/auth/spotify"
             style={{
               color: "var(--text-secondary)",
               fontSize: "14px",
@@ -63,7 +63,7 @@ export default function Home() {
             Sign in
           </Link>
           <Link
-            href="/dashboard"
+            href="/api/auth/spotify"
             style={{
               background: "#1DB954",
               color: "#fff",
@@ -212,7 +212,7 @@ export default function Home() {
             }}
           >
             <Link
-              href="/dashboard"
+              href="/api/auth/spotify"
               style={{
                 background: "#1DB954",
                 color: "#fff",
@@ -940,7 +940,7 @@ export default function Home() {
           {/* Big CTA button */}
           <div style={{ marginTop: "40px" }}>
             <Link
-              href="/dashboard"
+              href="/api/auth/spotify"
               style={{
                 background: "#1DB954",
                 color: "#fff",

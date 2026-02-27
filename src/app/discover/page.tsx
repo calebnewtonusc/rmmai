@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sparkles,
   Send,
@@ -10,6 +10,12 @@ import {
   Zap,
   Brain,
 } from "lucide-react";
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
 
 const GENRE_BARS = [
   { label: "Post-Rock", pct: 87 },
@@ -46,240 +52,60 @@ const SUGGESTED_PROMPTS = [
   "Rate my taste this month",
 ];
 
-interface Message {
-  role: "user" | "ai";
-  content: React.ReactNode;
-}
-
-const AlbumChip = ({ album, artist }: { album: string; artist: string }) => (
-  <span
-    className="glass"
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "4px 10px",
-      borderRadius: "999px",
-      fontSize: "12px",
-      color: "var(--text-secondary)",
-      margin: "2px 4px 2px 0",
-      whiteSpace: "nowrap",
-    }}
-  >
-    <Music2 size={11} style={{ color: "var(--accent)", flexShrink: 0 }} />
-    <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-      {album}
-    </span>
-    <span style={{ color: "var(--text-muted)" }}>·</span>
-    <span>{artist}</span>
-  </span>
-);
-
-const STATIC_MESSAGES: Message[] = [
-  {
-    role: "user",
-    content:
-      "My playlist is getting repetitive. What are my friends listening to that I'd love?",
-  },
-  {
-    role: "ai",
-    content: (
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        <p>
-          Based on your taste profile and what your friends have been spinning
-          lately, here&apos;s what&apos;s catching my attention:
-        </p>
-        <p>
-          <strong style={{ color: "var(--text-primary)" }}>
-            Frank Ocean&apos;s Blonde
-          </strong>{" "}
-          is trending across{" "}
-          <span style={{ color: "var(--accent)" }}>4 of your friends</span>{" "}
-          right now — and given your deep Alt R&B affinity at 82%, you&apos;ll
-          probably find tracks you missed the first time. Pay attention to
-          &ldquo;Nights&rdquo; and &ldquo;Self Control.&rdquo;
-        </p>
-        <p>
-          Beyond that, your Post-Rock percentage suggests you&apos;d connect
-          with what your network is discovering:
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", marginTop: "4px" }}>
-          <AlbumChip album="Carrie & Lowell" artist="Sufjan Stevens" />
-          <AlbumChip album="Bon Iver, Bon Iver" artist="Bon Iver" />
-          <AlbumChip album="Blonde" artist="Frank Ocean" />
-        </div>
-        <p style={{ color: "var(--text-secondary)", fontSize: "13px" }}>
-          Sufjan and Bon Iver both sit at the intersection of Indie Folk and
-          Post-Rock where your taste profile is strongest. Your friend Marcus
-          has been on a Sufjan deep-dive for 3 weeks — worth a message.
-        </p>
-      </div>
-    ),
-  },
-  {
-    role: "user",
-    content:
-      "Make me 3 playlists for tomorrow. Morning workout, focus work session, and late night drive.",
-  },
-  {
-    role: "ai",
-    content: (
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <p>Built from your taste profile. Here are three ready to go:</p>
-
-        <div
-          className="glass"
-          style={{ borderRadius: "12px", padding: "14px 16px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "10px",
-            }}
-          >
-            <Zap size={14} style={{ color: "#f97316" }} />
-            <span
-              style={{
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                fontSize: "14px",
-              }}
-            >
-              Morning Momentum
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                color: "var(--text-muted)",
-                marginLeft: "auto",
-              }}
-            >
-              22 min
-            </span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              fontSize: "13px",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <span>1. &ldquo;PRIDE.&rdquo; — Kendrick Lamar</span>
-            <span>2. &ldquo;Nights&rdquo; — Frank Ocean</span>
-            <span>3. &ldquo;DNA.&rdquo; — Kendrick Lamar</span>
-            <span>4. &ldquo;Self Control&rdquo; — Frank Ocean</span>
-            <span>5. &ldquo;Alright&rdquo; — Kendrick Lamar</span>
-          </div>
-        </div>
-
-        <div
-          className="glass"
-          style={{ borderRadius: "12px", padding: "14px 16px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "10px",
-            }}
-          >
-            <Brain size={14} style={{ color: "var(--accent)" }} />
-            <span
-              style={{
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                fontSize: "14px",
-              }}
-            >
-              Deep Focus
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                color: "var(--text-muted)",
-                marginLeft: "auto",
-              }}
-            >
-              38 min
-            </span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              fontSize: "13px",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <span>1. &ldquo;Re: Stacks&rdquo; — Bon Iver</span>
-            <span>2. &ldquo;Death With Dignity&rdquo; — Sufjan Stevens</span>
-            <span>3. &ldquo;Holocene&rdquo; — Bon Iver</span>
-            <span>4. &ldquo;Fourth of July&rdquo; — Sufjan Stevens</span>
-            <span>5. &ldquo;Skinny Love&rdquo; — Bon Iver</span>
-          </div>
-        </div>
-
-        <div
-          className="glass"
-          style={{ borderRadius: "12px", padding: "14px 16px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "10px",
-            }}
-          >
-            <Music2 size={14} style={{ color: "#3b82f6" }} />
-            <span
-              style={{
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                fontSize: "14px",
-              }}
-            >
-              Late Night Drive
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                color: "var(--text-muted)",
-                marginLeft: "auto",
-              }}
-            >
-              31 min
-            </span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              fontSize: "13px",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <span>1. &ldquo;Ivy&rdquo; — Frank Ocean</span>
-            <span>2. &ldquo;Motion Picture Soundtrack&rdquo; — Radiohead</span>
-            <span>3. &ldquo;White Ferrari&rdquo; — Frank Ocean</span>
-            <span>4. &ldquo;The Night Will Always Win&rdquo; — Manchester Orchestra</span>
-            <span>5. &ldquo;Videotape&rdquo; — Radiohead</span>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-];
-
 export default function DiscoverPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading) return;
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content };
+    const allMessages = [...messages, userMsg];
+    setMessages(allMessages);
+    setIsLoading(true);
+
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: allMessages.map(m => ({ role: m.role, content: m.content })) }),
+      });
+      if (!res.ok || !res.body) throw new Error("API error");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? { ...m, content: m.content + chunk } : m
+          ));
+        }
+      }
+    } catch {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId ? { ...m, content: "Sorry, something went wrong. Please try again." } : m
+      ));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [messages, isLoading]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    sendMessage(inputValue);
+    setInputValue("");
+  }
 
   return (
     <div
@@ -353,19 +179,40 @@ export default function DiscoverPage() {
             gap: "24px",
           }}
         >
-          {STATIC_MESSAGES.map((msg, i) => (
+          {messages.length === 0 && !isLoading && (
             <div
-              key={i}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                gap: "12px",
+                color: "var(--text-muted)",
+                fontSize: "14px",
+                paddingTop: "60px",
+              }}
+            >
+              <Sparkles size={32} style={{ color: "var(--accent)", opacity: 0.5 }} />
+              <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+                Ask anything about your music taste...
+              </p>
+            </div>
+          )}
+
+          {messages.map((msg, i) => (
+            <div
+              key={msg.id}
               className="animate-fade-in-up"
               style={{
-                animationDelay: `${i * 0.08}s`,
+                animationDelay: `${i * 0.04}s`,
                 display: "flex",
                 justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
                 gap: "12px",
                 alignItems: "flex-start",
               }}
             >
-              {msg.role === "ai" && (
+              {msg.role === "assistant" && (
                 <div
                   style={{
                     width: "30px",
@@ -385,11 +232,14 @@ export default function DiscoverPage() {
               )}
 
               <div
-                className={msg.role === "ai" ? "glass" : ""}
+                className={msg.role === "assistant" ? "glass" : ""}
                 style={{
                   maxWidth: "78%",
                   padding: "14px 18px",
-                  borderRadius: msg.role === "user" ? "20px 20px 6px 20px" : "6px 20px 20px 20px",
+                  borderRadius:
+                    msg.role === "user"
+                      ? "20px 20px 6px 20px"
+                      : "6px 20px 20px 20px",
                   background:
                     msg.role === "user"
                       ? "linear-gradient(135deg, var(--accent), #9333ea)"
@@ -400,6 +250,7 @@ export default function DiscoverPage() {
                       : "var(--text-secondary)",
                   fontSize: "14px",
                   lineHeight: "1.65",
+                  whiteSpace: "pre-wrap",
                 }}
               >
                 {msg.content}
@@ -428,6 +279,80 @@ export default function DiscoverPage() {
               )}
             </div>
           ))}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                gap: "12px",
+                alignItems: "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, var(--accent), #ec4899)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  marginTop: "2px",
+                }}
+              >
+                <Sparkles size={14} color="white" />
+              </div>
+              <div
+                className="glass"
+                style={{
+                  padding: "14px 18px",
+                  borderRadius: "6px 20px 20px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    display: "inline-block",
+                    animation: "pulse 1.2s ease-in-out infinite",
+                    animationDelay: "0s",
+                  }}
+                />
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    display: "inline-block",
+                    animation: "pulse 1.2s ease-in-out infinite",
+                    animationDelay: "0.2s",
+                  }}
+                />
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    display: "inline-block",
+                    animation: "pulse 1.2s ease-in-out infinite",
+                    animationDelay: "0.4s",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
@@ -450,7 +375,7 @@ export default function DiscoverPage() {
             {SUGGESTED_PROMPTS.map((prompt) => (
               <button
                 key={prompt}
-                onClick={() => setInputValue(prompt)}
+                onClick={() => { sendMessage(prompt); }}
                 className="glass"
                 style={{
                   padding: "6px 14px",
@@ -482,7 +407,8 @@ export default function DiscoverPage() {
           </div>
 
           {/* Input Row */}
-          <div
+          <form
+            onSubmit={handleSubmit}
             style={{
               display: "flex",
               gap: "10px",
@@ -518,16 +444,18 @@ export default function DiscoverPage() {
                 }}
               />
               <button
+                type="submit"
+                disabled={!inputValue.trim() || isLoading}
                 style={{
                   width: "38px",
                   height: "38px",
                   borderRadius: "12px",
                   background:
-                    inputValue.trim()
+                    inputValue.trim() && !isLoading
                       ? "linear-gradient(135deg, var(--accent), #9333ea)"
                       : "rgba(255,255,255,0.06)",
                   border: "none",
-                  cursor: inputValue.trim() ? "pointer" : "default",
+                  cursor: inputValue.trim() && !isLoading ? "pointer" : "default",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -537,11 +465,13 @@ export default function DiscoverPage() {
               >
                 <Send
                   size={16}
-                  color={inputValue.trim() ? "white" : "var(--text-muted)"}
+                  color={
+                    inputValue.trim() && !isLoading ? "white" : "var(--text-muted)"
+                  }
                 />
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
