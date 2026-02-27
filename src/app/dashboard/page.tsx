@@ -212,7 +212,7 @@ function StatCard({
   value: string | number;
   trend?: string;
   trendType?: "up" | "neutral";
-  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  icon?: LucideIcon;
   extra?: React.ReactNode;
 }) {
   return (
